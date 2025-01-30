@@ -259,7 +259,7 @@ fun VideoScreen(
                     ) {
                             Row(
                                 modifier = Modifier
-                                    .size(60.dp)
+                                    .size(80.dp)
                                     .border(
                                         width = 2.dp,
                                         color = MaterialTheme.colorScheme.background,
