@@ -84,7 +84,7 @@ fun VideoScreen(
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE
         )
-    }else{
+    } else {
         listOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
@@ -118,13 +118,16 @@ fun VideoScreen(
         if (recordingStart.value) {
             val t = object : TimerTask() {
                 override fun run() {
-                    time += 1
+                    if (!recordingStart.value) {
+                        timer.cancel()
+                        this.cancel()
+                    } else {
+                        time += 1
+                    }
                 }
             }
             if (!timerStart) {
                 timer.schedule(t, 0, 1000)
-            } else if (!recordingStart.value) {
-                timer.cancel()
             }
         }
     }
@@ -249,47 +252,44 @@ fun VideoScreen(
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
                     }
+                    .size(100.dp)
                     .padding(bottom = 16.dp),
                 content = {
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                            Row(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .border(
-                                        width = 2.dp,
-                                        color = MaterialTheme.colorScheme.background,
-                                        shape = CircleShape
-                                    )
-                            ) {
-                                if (!recordingStart.value) {
-                                    Row(
-                                        modifier = Modifier
-                                            .padding(6.dp)
-                                            .fillMaxSize()
-                                            .background(color = Color.Red, shape = CircleShape)
-                                    ) {}
-                                }else{
-                                    Row(
-                                        modifier = Modifier
-                                            .padding(12.dp)
-                                            .fillMaxSize()
-                                            .background(color = Color.Red, shape = RectangleShape)
-                                    ){
-
-                                    }
-                                }
+                        Row(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .border(
+                                    width = 4.dp,
+                                    color = Color.White,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            if (!recordingStart.value) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(9.dp)
+                                        .fillMaxSize()
+                                        .background(color = Color.Red, shape = CircleShape)
+                                ) {}
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(22.dp)
+                                        .fillMaxSize()
+                                        .background(color = Color.Red, shape = RectangleShape)
+                                ) {}
                             }
+                        }
                     }
                 }
             )
         }
     }
-
 }
 
 suspend fun Context.createVideoCaptureUseCase(
@@ -305,9 +305,10 @@ suspend fun Context.createVideoCaptureUseCase(
             surfaceProvider = previewView.surfaceProvider
         }
     val qualitySelector = QualitySelector.from(
-        Quality.SD,
-        FallbackStrategy.lowerQualityThan(Quality.SD)
+        Quality.HD,
+        FallbackStrategy.lowerQualityThan(Quality.HD)
     )
+
 
     val recorder = Recorder.Builder()
         .setExecutor(ContextCompat.getMainExecutor(context))
@@ -316,7 +317,7 @@ suspend fun Context.createVideoCaptureUseCase(
 
     val videoCapture = VideoCapture
         .withOutput(recorder)
-
+    
     val cameraProvider = getCameraProvider()
     cameraProvider.unbindAll()
     cameraProvider.bindToLifecycle(
