@@ -99,7 +99,7 @@ fun VideoScreen(
         }
     )
 
-    var recording: Recording? = remember { null }
+    val recording = remember { mutableStateOf<Recording?>(null) }
 
     var time by remember { mutableIntStateOf(0) }
     val previewView : PreviewView = remember { PreviewView(context) }
@@ -208,12 +208,12 @@ fun VideoScreen(
 
                             Log.e(TAG, "mediaDir = ${mediaDir?.path}")
                             if (mediaDir != null) {
-                                recording = startVideoRecording(
+                                recording.value = startVideoRecording(
                                     context = context,
                                     videoCapture = videoCapture,
                                     outputDirectory = mediaDir,
                                     executor = ContextCompat.getMainExecutor(context),
-                                    audioEnable = audioEnable.value
+                                    audioEnable = audioEnable.value,
                                 ) { event ->
                                     if (event is VideoRecordEvent.Finalize) {
                                         val uri = event.outputResults.outputUri
@@ -234,8 +234,8 @@ fun VideoScreen(
 
                                 Handler(Looper.getMainLooper()).postDelayed({
                                     recordingStart.value = false
-                                    recording?.stop()
-                                    recording = null
+                                    recording.value?.stop()
+                                    recording.value = null
                                 }, maxTime)
                             }
                             Log.e(TAG, "recording = $recording")
@@ -243,7 +243,8 @@ fun VideoScreen(
 
                     } else {
                         recordingStart.value = false
-                        recording?.stop()
+                        recording.value!!.stop()
+                        recording.value = null
                     }
                 },
                 modifier = Modifier
@@ -317,7 +318,7 @@ suspend fun Context.createVideoCaptureUseCase(
 
     val videoCapture = VideoCapture
         .withOutput(recorder)
-    
+
     val cameraProvider = getCameraProvider()
     cameraProvider.unbindAll()
     cameraProvider.bindToLifecycle(
